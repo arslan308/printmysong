@@ -10,6 +10,7 @@ use ZfrShopify\Validator\RequestValidator;
 use ZfrShopify\ShopifyClient;
 use GuzzleHttp\Client;
 use ZfrShopify\OAuth\TokenExchanger;
+use Illuminate\Support\Facades\Log;
 use App\User;
 use App\Shop;
 use Auth; 
@@ -18,11 +19,10 @@ use Auth;
 class ShopifyController extends Controller
 {
     public function index(Request $request){
-
         $apiKey         = env("APP_API_KEY");   
         $shopDomain     = $request->input('shop');   
         $scopes         = ['write_orders', 'write_products', 'write_themes', 'write_script_tags', 'write_content'];
-        $redirectionUri = env("REDIRECT_URL");      
+        $redirectionUri = env("REDIRECT_URL2");      
         $nonce          = 'strong_nonce'; 
 
         $response = new AuthorizationRedirectResponse($apiKey, $shopDomain, $scopes, $redirectionUri, $nonce);
@@ -86,7 +86,7 @@ public function create_webhok(Request $request){
     ]);  
     $res = $shopifyClient->createWebhook(array( 
         "topic" => "orders/create", 
-        "address"=> env("WEBHOOK_URL"),     
+        "address"=> env("WEBHOOK_URL"),      
         "format" => "json" 
         ));     
    return $res;        
@@ -116,17 +116,19 @@ public function call_webhok(Request $request){
         "lid" =>  $line_item['id'],
         "quantity" =>  $line_item['quantity'],
         "price" =>  $line_item['price'], 
-        "sku" =>  $line_item['sku'] ?? null,  
-        "hd_image" =>  $line_item['properties']['frame_image'] ?? null       
+        "sku" =>  "Acrylic06_7x10.5",   
+        // "hd_image" =>  $line_item['properties']['frame_image'] ?? null      
+        "hd_image" => "https://i.ibb.co/L6WnD4g/a0a0b655c120.png" 
         ));
     } 
     // return $line_item_data;   
-    $order_data = 
+    $order_data =  array(
+        "order_object" =>   
        array(
         "order_id" =>  $request->id,
         "order_date" => $request->created_at,
         "cart_sub_total" =>  $request->subtotal_price, 
-        "shipment" => [array(
+        "shipment" => array(
             "shipping_price" => $request->shipping_lines[0]['price'], 
             "shipping_declared_value" => $request->shipping_lines[0]['title'], 
             "shipping_label" => $request->shipping_lines[0]['title'],
@@ -135,14 +137,14 @@ public function call_webhok(Request $request){
                 "shipping_weight_units"=>  $request->total_weight,
                 "shipping_weight_value"=> $request->total_weight 
             )
-            )], 
+            ),  
         "cart_total" => $request->total_price, 
         "tax"=> $request->total_tax, 
         "customer_comments"=> null,
         "gift_message"=>null,
         "coupons"=> $coupons,
-        "discount"=> [$discount],  
-       "line_items"=> [$line_item_data], 
+        "discount"=> $discount,  
+       "line_items"=> $line_item_data, 
        "shipping_address_object" => array( 
         "first_name" => $request->shipping_address['first_name'],
         "last_name" =>$request->shipping_address['first_name'],
@@ -165,13 +167,16 @@ public function call_webhok(Request $request){
         "city" => $request->billing_address['city'],
         "zip" => $request->billing_address['zip'],
         "state" => $request->billing_address['province_code'],
-        "country" => $request->billing_address['country_code'], 
+        "country" => $request->billing_address['country_code'],  
        )
 
-    ); 
-    // print_r(json_encode($order_data));    
+    )); 
+    Log::debug(json_encode($order_data));    
+    // Log::debug($order_data);         
+    // print_r(json_encode($order_data));      
+    // exit;   
     $username = env("AMERICAN_USERNAME");
-    $password = env("AMERICAN_PASS"); 
+    $password = env("AMERICAN_PASS");  
     $ch = curl_init();  
     curl_setopt($ch, CURLOPT_URL,env("REQUEST_URL"));     
     curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'X-CSRF-Token: env("AMERICAN_CSRF")'));
@@ -181,7 +186,11 @@ public function call_webhok(Request $request){
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); 
     $result  = curl_exec($ch);
     curl_close($ch);
-    print_r($result);    
-    
+    // print_r($result);     
+    Log::debug(json_encode($result));       
 }
+
+    public function order_confirm(Request $request){
+
+    } 
 } 
