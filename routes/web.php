@@ -12,14 +12,16 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');  
-    Log::debug('abc');
+    Log::debug('abc'); 
+    return view('welcome');    
 });  
 Route::get('/verify', 'ShopifyController@index')->name('verify'); 
 Route::get('/authenticate', 'ShopifyController@redirect');
-Route::get('/create_webhok', 'ShopifyController@create_webhok'); 
-Route::post('/call_webhok', 'ShopifyController@call_webhok');     
-Route::post('/order_confirm', 'ShopifyController@order_confirm');   
+// Route::get('/create_webhok', 'ShopifyController@create_webhok'); 
+Route::post('/call_webhok', 'ShopifyController@call_webhok');      
+Route::post('/order_confirm', 'ShopifyController@order_confirm');     
+// Route::get('/delweb', 'ShopifyController@delweb');   
+
 
 
 //     $api_key = env("APP_API_KEY");
